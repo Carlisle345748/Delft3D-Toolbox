@@ -1,0 +1,52 @@
+table-name           'Discharge : 1'
+contents             'regular   '
+location             '3                   '
+time-function        'non-equidistant'
+reference-time       20200331
+time-unit            'minutes'
+interpolation        'linear'
+parameter            'time                '                     unit '[min]'
+parameter            'flux/discharge rate '                     unit '[m3/s]'
+parameter            'spill               '                     unit '[kg/m3]'
+records-in-table     2
+ 0.0000000e+00 0.0000000e+00 5.0000000e+00
+ 4.3200000e+03 0.0000000e+00 5.0000000e+00
+table-name           'Discharge : 2'
+contents             'regular   '
+location             '4                   '
+time-function        'non-equidistant'
+reference-time       20200331
+time-unit            'minutes'
+interpolation        'linear'
+parameter            'time                '                     unit '[min]'
+parameter            'flux/discharge rate '                     unit '[m3/s]'
+parameter            'spill               '                     unit '[kg/m3]'
+records-in-table     2
+ 0.0000000e+00 0.0000000e+00 5.0000000e+00
+ 4.3200000e+03 0.0000000e+00 5.0000000e+00
+table-name           'Discharge : 3'
+contents             'regular   '
+location             '5                   '
+time-function        'non-equidistant'
+reference-time       20200331
+time-unit            'minutes'
+interpolation        'linear'
+parameter            'time                '                     unit '[min]'
+parameter            'flux/discharge rate '                     unit '[m3/s]'
+parameter            'spill               '                     unit '[kg/m3]'
+records-in-table     2
+ 0.0000000e+00 0.0000000e+00 5.0000000e+00
+ 4.3200000e+03 0.0000000e+00 5.0000000e+00
+table-name           'Discharge : 4'
+contents             'regular   '
+location             '6                   '
+time-function        'non-equidistant'
+reference-time       20200331
+time-unit            'minutes'
+interpolation        'linear'
+parameter            'time                '                     unit '[min]'
+parameter            'flux/discharge rate '                     unit '[m3/s]'
+parameter            'spill               '                     unit '[kg/m3]'
+records-in-table     2
+ 0.0000000e+00 0.0000000e+00 5.0000000e+00
+ 4.3200000e+03 0.0000000e+00 5.0000000e+00
