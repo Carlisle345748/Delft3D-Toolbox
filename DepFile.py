@@ -1,6 +1,9 @@
+import re
 import numpy as np
 from delft3d.GrdFile import GrdFile
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.colors import ListedColormap
 
 
 class DepFile(object):
@@ -9,33 +12,38 @@ class DepFile(object):
 
     Example
     --------
-    >>> dep = DepFile('river.dep')
+    >>> dep1 = DepFile('river.dep', 'river.grd')
+    >>> grd_file = GrdFile('river.grd')
+    >>> dep2 = DepFile('river.dep', grd_file)
     """
-    def __init__(self, filename):
+    def __init__(self, filename, grd_file):
         self.filename = filename
+        if type(grd_file) == str:
+            self.grd_file = GrdFile(grd_file)
+        elif type(grd_file) == GrdFile:
+            self.grd_file = grd_file
+        else:
+            raise ValueError("Please supply the GrdFile instance or grd file's filename")
         self.data = self.load_dep()
 
     def load_dep(self):
         """Read dep file"""
         with open(self.filename, 'r') as f:
-            data = f.readlines()
+            data = f.read()
+        pattern = r'(\s+[\d.E+-]+\n?){' + str(self.grd_file.header['MN'][0] + 1) + '}'
+        matches = re.finditer(pattern, data)
         dep = list()
-        for line in data:
-            dep.append([float(i) for i in line.split()])
+        for matche in matches:
+            dep.append([float(i) for i in matche[0].split()])
         dep = np.array(dep)
         dep = np.delete(dep, -1, axis=0)
         dep = np.delete(dep, -1, axis=1)
 
         return dep
 
-    def plot(self, grd_file):
+    def plot(self):
         """
         Visualize dep file
-
-        Parameters
-        ----------
-        grd_file : GrdFile
-            GrdFile instance of the corresponding grd file.
 
         Examples
         -------
@@ -43,13 +51,43 @@ class DepFile(object):
         >>> dep = DepFile('river.dep')
         >>> dep.plot(grd)
         """
-        if type(grd_file) != GrdFile:
-            raise ValueError("Please input an GrdFile class instance")
-        if grd_file.header['Coordinate System'] == 'Spherical':
-            grd_file.spherical_to_cartesian()
+        if self.grd_file.header['Coordinate System'] == 'Spherical':
+            self.grd_file.spherical_to_cartesian()
             print("Automatically transform from spherical to cartesian coordinates")
-        plt.pcolormesh(grd_file.x, grd_file.y, self.data, cmap='Blues',
-                       edgecolor=None, linewidth=0.005)
+
+        # Preprocessing
+        x, y = np.array(self.grd_file.x), np.array(self.grd_file.y)
+        z = self.data.copy()  # generate z for pcolormesh
+        # if any of the four corners of each grid is invalid(missing value), the grid is marked invalid
+        # this preprocess make sure that pcolormesh won't generate weired grid because of missing value
+        for i in range(x.shape[0] - 1):
+            for j in range(x.shape[1] - 1):
+                if x[i, j] == 0 or x[i+1, j] == 0 or x[i, j+1] == 0 or x[i+1, j+1] == 0:
+                    z[i, j] = -999
+        # mask the invalid grid to make it transparent in pcolormesh
+        z = np.ma.masked_equal(z, -999)
+
+        # interpolate the missing value in grd file
+        # otherwise the pcolormesh will inclue the missing value in grid
+        missing_value = self.grd_file.header['Missing Value']
+        for index, arr in enumerate(x):
+            x1 = np.argwhere(arr == missing_value).ravel()
+            x2 = np.argwhere(arr != missing_value).ravel()
+            y2 = arr[arr != missing_value]
+            x[index][x[index] == missing_value] = np.interp(x1, x2, y2)
+        for index, arr in enumerate(y):
+            x1 = np.argwhere(arr == missing_value).ravel()
+            x2 = np.argwhere(arr != missing_value).ravel()
+            y2 = arr[arr != missing_value]
+            y[index][y[index] == missing_value] = np.interp(x1, x2, y2)
+
+        # Define colormap
+        Blues = cm.get_cmap('Blues', 12)
+        newcolors = Blues(np.linspace(0.2, 1, 256))
+        newcmp = ListedColormap(newcolors)
+        # plot depth
+        plt.pcolormesh(x, y, z, cmap=newcmp,
+                       linewidth=0.005, edgecolor=None)
         plt.axis('equal')
         plt.colorbar()
         plt.show()

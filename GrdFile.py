@@ -27,7 +27,7 @@ class GrdFile(object):
         coordinate_system = re.search(r'Coordinate System = ([\w]+)', data)
         self.header['Coordinate System'] = coordinate_system.group(1) if coordinate_system else None
         missing_value = re.search(r'Missing Value\s+=\s+([\w+-.]+)', data)
-        self.header['Missing Value'] = np.float(missing_value.group(1)) if missing_value else None
+        self.header['Missing Value'] = np.float(missing_value.group(1)) if missing_value else 0
         mn = re.search(r'\n\s+([\d]+)\s+([\d]+)\n', data)
         m, n = int(mn.group(1)), int(mn.group(2))
         self.header['MN'] = [m, n]
@@ -44,8 +44,8 @@ class GrdFile(object):
                 y.extend(cor)
         x, y = np.array(x), np.array(y)
         # mask invalid value
-        x = np.ma.masked_equal(x, self.header['Missing Value']) if missing_value else x
-        y = np.ma.masked_equal(y, self.header['Missing Value']) if missing_value else y
+        x = np.ma.masked_equal(x, self.header['Missing Value'])
+        y = np.ma.masked_equal(y, self.header['Missing Value'])
         # reshape to the original format
         self.x = x.reshape(n, m)
         self.y = y.reshape(n, m)
@@ -179,13 +179,42 @@ class GrdFile(object):
             plot_crs = CRS.from_epsg(car_epsg)
             projection = Transformer.from_crs(grd_crs, plot_crs)
             x, y = projection.transform(self.x, self.y)
+
             print("Automatically transform from spherical to cartesian coordinates.\n"
                   "Change the default projection by giving specific grd_epsg and plot_epsg")
         else:
             x, y = self.x, self.y
+
+        # Preprocessing
+        x, y = np.array(x.data), np.array(y.data)
+        z = np.zeros(np.shape(x))  # generate z for pcolormesh
+        # If any of the four corners of each grid is invalid(missing value),
+        # the grid is marked invalid. This preprocess make sure that pcolormesh
+        # won't generate weired grid because of the missing value
+        invlid = self.header['Missing Value']  # Missing Value
+        for i in range(x.shape[0] - 1):
+            for j in range(x.shape[1] - 1):
+                if x[i, j] == invlid or x[i+1, j] == invlid or\
+                        x[i, j+1] == invlid or x[i+1, j+1] == invlid:
+                    z[i,j] = 1
+        # mask the invalid grid to make it transparent in pcolormesh
+        z = np.ma.masked_equal(z, 1)
+
+        # interpolate the missing value in grd file
+        # otherwise the pcolormesh will inclue the missing value in grid
+        for index, arr in enumerate(x):
+            x1 = np.argwhere(arr == invlid).ravel()
+            x2 = np.argwhere(arr != invlid).ravel()
+            y2 = arr[arr != invlid]
+            x[index][x[index] == invlid] = np.interp(x1, x2, y2)
+        for index, arr in enumerate(y):
+            x1 = np.argwhere(arr == invlid).ravel()
+            x2 = np.argwhere(arr != invlid).ravel()
+            y2 = arr[arr != invlid]
+            y[index][y[index] == invlid] = np.interp(x1, x2, y2)
         # plot grid
-        plt.pcolormesh(x, y, np.zeros(np.shape(self.x)),
-                       edgecolor=None, facecolor='none', linewidth=0.005)
+        plt.pcolormesh(x, y, z, edgecolor='black',
+                       facecolor='none', linewidth=0.005)
         plt.axis('equal')
         plt.show()
 
@@ -232,7 +261,7 @@ class GrdFile(object):
         grd_file = list()
         # Add header
         grd_file.append("Coordinate System = %s\n" % self.header['Coordinate System'])
-        if self.header['Missing Value'] is not None:
+        if self.header['Missing Value'] != 0:
             grd_file.append("Missing Value = %.7e\n" % self.header['Missing Value'])
         grd_file.append("%8d%8d\n" % ((self.header['MN'][0]), self.header['MN'][1]))
         grd_file.append(" 0 0 0\n")

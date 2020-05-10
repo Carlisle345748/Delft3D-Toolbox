@@ -104,7 +104,7 @@ class TestTimeSeriesFile(TestCase):
         self.assertEqual(n, 47)
 
     def test_DepFile(self):
-        dep_data = delft3d.DepFile('dep_test.dep').export()
+        dep_data = delft3d.DepFile('dep_test.dep', 'grd_test1.grd').export()
         with open('dep_test.dep', 'r') as f:
             dep_file = f.readlines()
         self.assertListEqual(dep_data, dep_file)

@@ -125,3 +125,9 @@ dmypy.json
 
 # Pycharm
 .idea/
+
+# Scratch_script
+scratch.py
+
+# Examples
+example/
