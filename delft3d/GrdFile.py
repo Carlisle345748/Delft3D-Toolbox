@@ -11,9 +11,10 @@ class GrdFile(object):
 
     Examples
     --------
-    >>> grd = GrdFile('river.grd')
+    >>> import delft3d
+    >>> grd = delft3d.GrdFile('river.grd')
     """
-    def __init__(self, filename: str):
+    def __init__(self, filename):
         self.filename = filename
         self.x, self.y = None, None
         self.header = {}
@@ -67,7 +68,8 @@ class GrdFile(object):
 
         Examples
         ----------
-        >>> grd = GrdFile('river.grd')
+        >>> import delft3d
+        >>> grd = delft3d.GrdFile('river.grd')
         >>> grd.spherical_to_cartesian()
         >>> grd.spherical_to_cartesian(sph_epsg=4326, car_epsg=26917)
         """
@@ -96,7 +98,8 @@ class GrdFile(object):
             EPSG of the objective spherical coordinate system
         Examples
         ----------
-        >>> grd = GrdFile('river.grd')
+        >>> import delft3d
+        >>> grd = delft3d.GrdFile('river.grd')
         >>> grd.cartesian_to_spherical()
         >>> grd.cartesian_to_spherical(car_epsg=26917, sph_epsg=4326)
 
@@ -135,7 +138,8 @@ class GrdFile(object):
 
         Examples
         --------
-        >>> grd = GrdFile('river.grd')
+        >>> import delft3d
+        >>> grd = delft3d.GrdFile('river.grd')
         >>> m, n = grd.get_nearest_grid(505944.89, 2497013.47)
         """
         if self.header['Coordinate System'] == 'Spherical':
@@ -156,21 +160,28 @@ class GrdFile(object):
         n, m = np.unravel_index(num, (self.header['MN'][1], self.header['MN'][0]))
         return m, n
 
-    def plot(self, sph_epsg=4326, car_epsg=3857):
+    def plot(self, filename=None, sph_epsg=4326, car_epsg=3857):
         """
         Visualize the grid.If the coordinate system is spherical, it will be automatically
         convert to cartesian coordinate system. You can specify the EPSG of coordiante
         by assigning sph_egsp and car_epsg. Find the EPSG of more coordinate system in
         the following link. https://developers.arcgis.com/javascript/3/jshelp/pcs.htm
+
         Parameters
         ----------
+        filename : str, optional
+            If filename is given, the figure will be saved with the filename.
         sph_epsg : int, optional
+            The EPSG of spherical cooridante.
         car_epsg : int, optional
+            The EPSG of carsetian cooridante.
 
         Examples
         -------
-        >>> grd = GrdFile('river.grd')
+        >>> import delft3d
+        >>> grd = delft3d.GrdFile('river.grd')
         >>> grd.plot()
+        >>> grd.plot('test.jpg')
         >>> grd.plot(sph_epsg=4326, car_epsg=26917)
         """
         if self.header['Coordinate System'] == 'Spherical':
@@ -185,7 +196,7 @@ class GrdFile(object):
         else:
             x, y = self.x, self.y
 
-        # Preprocessing
+        # Prepossessing
         x, y = np.array(x.data), np.array(y.data)
         z = np.zeros(np.shape(x))  # generate z for pcolormesh
         # If any of the four corners of each grid is invalid(missing value),
@@ -213,10 +224,14 @@ class GrdFile(object):
             y2 = arr[arr != invlid]
             y[index][y[index] == invlid] = np.interp(x1, x2, y2)
         # plot grid
-        plt.pcolormesh(x, y, z, edgecolor='black',
-                       facecolor='none', linewidth=0.005)
-        plt.axis('equal')
-        plt.show()
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111)
+        ax.pcolormesh(x, y, z, edgecolor='black',
+                            facecolor='none', linewidth=0.005)
+        ax.axis('equal')
+        if filename:
+            plt.savefig(filename)
+        fig.show()
 
     def set_gird(self, x, y, coordinate_system):
         """
@@ -233,7 +248,8 @@ class GrdFile(object):
 
         Examples
         -------
-        >>> grd = GrdFile('river.grd')
+        >>> import delft3d
+        >>> grd = delft3d.GrdFile('river.grd')
         >>> grd_x = np.loadtxt('grd_x.txt')
         >>> grd_y = np.loadtxt('grd_y.txt')
         >>> grd.set_gird(grd_x, grd_y, 'Cartesian')
@@ -249,7 +265,8 @@ class GrdFile(object):
 
         Examples
         -------
-        >>> grd = GrdFile('river.grd')
+        >>> import delft3d
+        >>> grd = delft3d.GrdFile('river.grd')
         >>> grd_file = grd.export()
         >>> grd_file
             ['Coordinate System = Cartesian\\n',
@@ -304,7 +321,8 @@ class GrdFile(object):
 
         Examples
         -------
-        >>> grd = GrdFile('river.grd')
+        >>> import delft3d
+        >>> grd = delft3d.GrdFile('river.grd')
         >>> grd.to_file('river.grd')
         """
         grd_file = self.export()

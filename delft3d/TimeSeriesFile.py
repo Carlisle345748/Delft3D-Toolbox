@@ -10,7 +10,8 @@ class TimeSeriesFile(object):
 
     Examples
     --------
-    >>> bct = TimeSeriesFile('river.bct')
+    >>> import delft3d
+    >>> bct = delft3d.TimeSeriesFile('river.bct')
     >>> bcc = TimeSeriesFile('river.bcc')
     >>> dis = TimeSeriesFile('river.dis')
     """
@@ -62,7 +63,8 @@ class TimeSeriesFile(object):
 
         Examples
         -------
-        >>> bct = TimeSeriesFile('river.bct')
+        >>> import delft3d
+        >>> bct = delft3d.TimeSeriesFile('river.bct')
         >>> bct.set_header(0, {'time-unit': 'hours', 'location': '(2,3)..(4,6)'})
         >>> bct.set_header(0, {'parameter': {'time': 'relative-time', 'pollution': 'NH3-N'}})
         >>> bct.set_header(0, {'parameter':{'time': 'hour', 'pollution': 'mg/l'}}, unit=True)
@@ -90,16 +92,20 @@ class TimeSeriesFile(object):
 
         Example
         ----------
-        >>> bct = TimeSeriesFile('river.bct')
-        >>> flow_series = pd.read_csv('flow.csv', index_col=0)
-        >>> pollution_series = pd.read_csv('pollution.csv', index_col=0)
-        >>> flow_series.head()
-            2020-03-31 00:00:00    0.4077
-            2020-03-31 00:10:00    0.4282
-            2020-03-31 00:20:00    0.4707
-            2020-03-31 00:30:00    0.5127
-            2020-03-31 00:40:00    0.5692
-        >>> bct.set_time_series(0, '2020-03-04', flow_series, pollution_series)
+        >>> import delft3d
+        >>> bct = delft3d.TimeSeriesFile('river.bct')
+        >>> flow_series_A = pd.read_csv('flow_series_A.csv', index_col=0)
+        >>> flow_series_A.index = pd.to_datetime(flow_series_A.index)
+        >>> flow_series_B = pd.read_csv('flow_series_B.csv', index_col=0)
+        >>> flow_series_B.index = pd.to_datetime(flow_series_B.index)
+        >>> flow_series_A.head()
+                                 total discharge (t)  end A
+            2020-03-31 00:00:00                   -5.244540
+            2020-03-31 00:10:00                   -5.513570
+            2020-03-31 00:20:00                   -5.802258
+            2020-03-31 00:30:00                   -6.178733
+            2020-03-31 00:40:00                   -6.445315
+        >>> bct.set_time_series(0, '2020-03-04', flow_series_A, flow_series_B)
 
         """
         self.data[num].set_time_series(reference_time, data1, data2)
@@ -110,7 +116,8 @@ class TimeSeriesFile(object):
 
         Example
         -------
-        >>> bct = TimeSeriesFile('river.bct')
+        >>> import delft3d
+        >>> bct = delft3d.TimeSeriesFile('river.bct')
         >>> bct_file = bct.export()
         >>> bct_file
             ["table-name           'Boundary Section : 1'\\n",
@@ -135,7 +142,8 @@ class TimeSeriesFile(object):
 
         Examples
         ----------
-        >>> bct = TimeSeriesFile('river.bct')
+        >>> import delft3d
+        >>> bct = delft3d.TimeSeriesFile('river.bct')
         >>> bct.to_file('river.bct')
         """
         bct_data = self.export()
@@ -316,7 +324,7 @@ class Parameter(object):
 
         return content
 
-    def __str__(self):
+    def __repr__(self):
         if self.unit:
             return "{} unit={}".format(self.value, self.unit)
         else:

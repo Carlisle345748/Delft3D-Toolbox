@@ -9,7 +9,8 @@ class MdfFile(object):
 
     Examples
     --------
-    >>> mdf = MdfFile('river.mdf')
+    >>> import delft3d
+    >>> mdf = delft3d.MdfFile('river.mdf')
     """
     def __init__(self, filename):
         self.filename = filename
@@ -72,7 +73,8 @@ class MdfFile(object):
 
         Examples
         ----------
-        >>> mdf = MdfFile('river.mdf')
+        >>> import delft3d
+        >>> mdf = delft3d.MdfFile('river.mdf')
         >>> mdf.set_parm({'Fildep': 'river.dep', 'Dt': 0.5, 'Flmap':[0, 10, 4320]})
 
         """
@@ -101,7 +103,8 @@ class MdfFile(object):
 
         Examples:
         ---------
-        >>> mdf = MdfFile('river.mdf')
+        >>> import delft3d
+        >>> mdf = delft3d.MdfFile('river.mdf')
         >>> mdf_file = mdf.export()
         >>> mdf_file
             ['Ident  = #Delft3D-FLOW 3.59.01.57433#\\n',
@@ -162,7 +165,8 @@ class MdfFile(object):
 
         Examples
         --------
-        >>> mdf = MdfFile('river.mdf')
+        >>> import delft3d
+        >>> mdf = delft3d.MdfFile('river.mdf')
         >>> mdf.to_file('river.mdf')
         """
         mdf_file = self.export()

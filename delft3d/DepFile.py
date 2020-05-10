@@ -12,9 +12,10 @@ class DepFile(object):
 
     Example
     --------
-    >>> dep1 = DepFile('river.dep', 'river.grd')
-    >>> grd_file = GrdFile('river.grd')
-    >>> dep2 = DepFile('river.dep', grd_file)
+    >>> import delft3d
+    >>> dep1 = delft3d.DepFile('river.dep', 'river.grd')
+    >>> grd_file = delft3d.GrdFile('river.grd')
+    >>> dep2 = delft3d.DepFile('river.dep', grd_file)
     """
     def __init__(self, filename, grd_file):
         self.filename = filename
@@ -41,18 +42,33 @@ class DepFile(object):
 
         return dep
 
-    def plot(self):
+    def plot(self, filename=None, sph_epsg=4326, car_epsg=3857):
         """
-        Visualize dep file
+        Visualize the depth. If the coordinate system is spherical, it will be automatically
+        convert to cartesian coordinate system. You can specify the EPSG of coordiante
+        by assigning sph_egsp and car_epsg. Find the EPSG of more coordinate system in
+        the following link. https://developers.arcgis.com/javascript/3/jshelp/pcs.htm
+
+        Parameters
+        ----------
+        filename : str, optional
+            If filename is given, the figure will be saved with the filename.
+        sph_epsg : int, optional
+            The EPSG of spherical cooridante.
+        car_epsg : int, optional
+            The EPSG of carsetian cooridante.
 
         Examples
         -------
-        >>> grd = GrdFile('river.grd')
-        >>> dep = DepFile('river.dep')
-        >>> dep.plot(grd)
+        >>> import delft3d
+        >>> grd = delft3d.GrdFile('river.grd')
+        >>> dep = delft3d.DepFile('river.dep', grd)
+        >>> dep.plot()
+        >>> dep.plot('test.jpg')
+        >>> dep.plot(sph_epsg=4326, car_epsg=26917)
         """
         if self.grd_file.header['Coordinate System'] == 'Spherical':
-            self.grd_file.spherical_to_cartesian()
+            self.grd_file.spherical_to_cartesian(sph_epsg, car_epsg)
             print("Automatically transform from spherical to cartesian coordinates")
 
         # Preprocessing
@@ -82,15 +98,19 @@ class DepFile(object):
             y[index][y[index] == missing_value] = np.interp(x1, x2, y2)
 
         # Define colormap
-        Blues = cm.get_cmap('Blues', 12)
-        newcolors = Blues(np.linspace(0.2, 1, 256))
+        blues = cm.get_cmap('Blues', 12)
+        newcolors = blues(np.linspace(0.2, 1, 256))
         newcmp = ListedColormap(newcolors)
         # plot depth
-        plt.pcolormesh(x, y, z, cmap=newcmp,
-                       linewidth=0.005, edgecolor=None)
-        plt.axis('equal')
-        plt.colorbar()
-        plt.show()
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111)
+        ax0 = ax.pcolormesh(x, y, z, cmap=newcmp,
+                            linewidth=0.005, edgecolor=None)
+        ax.axis('equal')
+        fig.colorbar(ax0)
+        if filename:
+            plt.savefig(filename)
+        fig.show()
 
     def set_dep(self, data):
         """
@@ -101,7 +121,8 @@ class DepFile(object):
             New dep data.
         Examples
         -------
-        >>> dep = DepFile('river.deo')
+        >>> import delft3d
+        >>> dep = delft3d.DepFile('river.dep')
         >>> dep_data = np.loadtxt('dep_data.txt')
         >>> dep.set_dep(dep_data)
         """
@@ -113,7 +134,8 @@ class DepFile(object):
 
         Examples
         -------
-        >>> dep = DepFile('river.dep')
+        >>> import delft3d
+        >>> dep = delft3d.DepFile('river.dep')
         >>> dep_file = dep.export()
         >>> dep_file
             ['   1.6929708E-01   2.8992051E-01   5.0572435E-01\\n,
@@ -141,7 +163,8 @@ class DepFile(object):
             Filename of Delft3D dep file
         Examples
         -------
-        >>> dep = DepFile('river.dep')
+        >>> import delft3d
+        >>> dep = delft3d.DepFile('river.dep')
         >>> dep.to_file('river.dep')
         """
         dep_file = self.export()
