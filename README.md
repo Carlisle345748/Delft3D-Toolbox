@@ -4,7 +4,8 @@ Python package to work with Delft3D-FLOW model.
 
 ## Feature
 
-- Read, modify and write Delft3D time-series files including boundary file(`.bct`)(`.bcc`) and dischage file (`.dis`).
+- Run Delft3D FLOW model in parallel (require compiled Delft3D source code).
+- Read, modify and write Delft3D time-series files including boundary file(`.bct`)(`.bcc`) and discharge file (`.dis`).
 - Read, modify and write Delft3D model file (`.mdf`)
 - Read, modify, visualize and write Delft3D grid file(`.grd`) and depth file (`.dep`).
 
@@ -15,12 +16,12 @@ Python package to work with Delft3D-FLOW model.
 
 1. Clone or download the repository.
 
-2. To directly import this module, add the 'delft3d' folder to one of  following diretoryies:
+2. To directly import this module, add the 'delft3d' folder to one of  following directories:
     - Your project directories.
 
     - The 'site-packages' folder of Python installation. When using Anaconda, the most likely path is C:/users/[username]/Anaconda3/Lib/site-packages.
 
-    - User defined directory. Create a (`.pth`) file contating the path of the user defined directory. Add this (`.pth`) file to the 'site-packages' folder. Here is an example of (`.pth`) file:
+    - User defined directory. Create a (`.pth`) file containing the path of the user defined directory. Add this (`.pth`) file to the 'site-packages' folder. Here is an example of (`.pth`) file:
 
             D:/mymodule
 
@@ -30,13 +31,28 @@ Python package to work with Delft3D-FLOW model.
     - matplotlib
     - numpy
     - pandas
-    - re
 
 ## Usage
 
 Here is some examples of using this package. See more detail and examples in the docstring.
 
-1. Time-Series files(`.bct, .bcc, .dis`)
+1. Run Delft3D Flow simulation
+   ``` python
+   import delft3d
+   # supply the path of compiled Delft3D source code to create simulation runner
+   sim = delft3d.Simulation('C:/Users/Carlisle/Desktop/62422/src/bin/x64')
+   sim.run('example/dflow1/f34.mdf')  # run single simulation
+   sim.run('example/dflow1/f34.mdf', disp=False)  # no simulation progress
+   sim.run('example/dflow1/f34.mdf', netcdf=True)  # save simulation result as netcdf
+   # run multiple simulations one by one
+   sim.run(['example/dflow1/f34.mdf', 'example/dflow2/f342.mdf'])
+   # run multiple simulations in parallel with 2 workers
+   sim.run(['example/dflow1/f34.mdf', 'example/dflow2/f342.mdf'], workers=2)
+   # run multiple simulations in parallel with all cpu cores
+   sim.run(['example/dflow1/f34.mdf', 'example/dflow2/f342.mdf'], workers=-1)
+   ```
+
+2. Time-Series files(`.bct, .bcc, .dis`)
 
    ```python
    import delft3d
@@ -65,7 +81,7 @@ Here is some examples of using this package. See more detail and examples in the
 
    ```
 
-2. Model file (`.mdf`)
+3. Model file (`.mdf`)
 
    ```python
    import delft3d
@@ -83,7 +99,7 @@ Here is some examples of using this package. See more detail and examples in the
    # write to a file
    mdf.to_file('edited_mdf.mdf')
    ```
-3. Grid file (`.grd`) and depth file (`.dep`)
+4. Grid file (`.grd`) and depth file (`.dep`)
 
    ```python
    import delft3d

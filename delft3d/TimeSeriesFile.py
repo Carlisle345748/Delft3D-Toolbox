@@ -329,10 +329,3 @@ class Parameter(object):
             return "{} unit={}".format(self.value, self.unit)
         else:
             return "{}".format(self.value)
-
-
-
-
-
-
-

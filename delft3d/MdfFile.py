@@ -97,6 +97,27 @@ class MdfFile(object):
                 # character parameter
                 self.data[key] = str(value)
 
+    def add_parm(self, data):
+        # TODO 测试这个method
+        for key, value in data.items():
+            if type(value) in [float, int]:
+                # single number parameter
+                self.data[key] = float(value)
+            elif type(value) == np.ndarray:
+                # array parameter
+                if len(value.shape) == 1:
+                    # single-line array parameter
+                    self.data[key] = np.array(value)
+                else:
+                    # multiple-line array parameter
+                    self.data[key] = np.array(value).reshape(-1, 1)
+            elif key == 'Runtxt':
+                # multiple-line character parameter
+                self.data[key] = value
+            else:
+                # character parameter
+                self.data[key] = str(value)
+
     def export(self):
         """
         Export the data to a list in the format of Delft3D mdf file
