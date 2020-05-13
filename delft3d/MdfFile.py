@@ -10,7 +10,7 @@ class MdfFile(object):
     Examples
     --------
     >>> import delft3d
-    >>> mdf = delft3d.MdfFile('river.mdf')
+    >>> mdf = delft3d.MdfFile('example/example1.mdf')
     """
     def __init__(self, filename):
         self.filename = filename
@@ -74,7 +74,7 @@ class MdfFile(object):
         Examples
         ----------
         >>> import delft3d
-        >>> mdf = delft3d.MdfFile('river.mdf')
+        >>> mdf = delft3d.MdfFile('example/example1.mdf')
         >>> mdf.set_parm({'Fildep': 'river.dep', 'Dt': 0.5, 'Flmap':[0, 10, 4320]})
 
         """
@@ -98,7 +98,23 @@ class MdfFile(object):
                 self.data[key] = str(value)
 
     def add_parm(self, data):
-        # TODO 测试这个method
+        """
+        Add new parameter. When adding new values for parameters with multiple
+        values (single-line or multiple-line array parameter e.g. Flmap), please
+        input iterable data type such as list, tuple and ndarray.
+
+        Parameters
+        ----------
+        data : dict
+            A dict contains names and new values of parameters e.g. {'Fildep': 'river.dep'}.
+            Each key and value are corespond to the name and value of one parameter.
+
+        Examples
+        -------
+        >>> import delft3d
+        >>> mdf = delft3d.MdfFile('example/example1.mdf')
+        >>> mdf.add_parm({'FlNcdf': 'map his dro fou'})
+        """
         for key, value in data.items():
             if type(value) in [float, int]:
                 # single number parameter
@@ -125,7 +141,7 @@ class MdfFile(object):
         Examples:
         ---------
         >>> import delft3d
-        >>> mdf = delft3d.MdfFile('river.mdf')
+        >>> mdf = delft3d.MdfFile('example/example1.mdf')
         >>> mdf_file = mdf.export()
         >>> mdf_file
             ['Ident  = #Delft3D-FLOW 3.59.01.57433#\\n',
@@ -187,7 +203,7 @@ class MdfFile(object):
         Examples
         --------
         >>> import delft3d
-        >>> mdf = delft3d.MdfFile('river.mdf')
+        >>> mdf = delft3d.MdfFile('example/example1.mdf')
         >>> mdf.to_file('river.mdf')
         """
         mdf_file = self.export()

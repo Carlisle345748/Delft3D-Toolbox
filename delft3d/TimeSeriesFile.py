@@ -11,9 +11,9 @@ class TimeSeriesFile(object):
     Examples
     --------
     >>> import delft3d
-    >>> bct = delft3d.TimeSeriesFile('river.bct')
-    >>> bcc = TimeSeriesFile('river.bcc')
-    >>> dis = TimeSeriesFile('river.dis')
+    >>> bct = delft3d.TimeSeriesFile('example/example1.bct')
+    >>> bcc = TimeSeriesFile('example/example1.bcc')
+    >>> dis = TimeSeriesFile('example/example1.dis')
     """
     def __init__(self, filename):
         self.type = os.path.splitext(filename)[1][1:]
@@ -64,7 +64,7 @@ class TimeSeriesFile(object):
         Examples
         -------
         >>> import delft3d
-        >>> bct = delft3d.TimeSeriesFile('river.bct')
+        >>> bct = delft3d.TimeSeriesFile('example/example1.bct')
         >>> bct.set_header(0, {'time-unit': 'hours', 'location': '(2,3)..(4,6)'})
         >>> bct.set_header(0, {'parameter': {'time': 'relative-time', 'pollution': 'NH3-N'}})
         >>> bct.set_header(0, {'parameter':{'time': 'hour', 'pollution': 'mg/l'}}, unit=True)
@@ -93,10 +93,10 @@ class TimeSeriesFile(object):
         Example
         ----------
         >>> import delft3d
-        >>> bct = delft3d.TimeSeriesFile('river.bct')
-        >>> flow_series_A = pd.read_csv('flow_series_A.csv', index_col=0)
+        >>> bct = delft3d.TimeSeriesFile('example/example1.bct')
+        >>> flow_series_A = pd.read_csv('example/flow_series_A.csv', index_col=0)
         >>> flow_series_A.index = pd.to_datetime(flow_series_A.index)
-        >>> flow_series_B = pd.read_csv('flow_series_B.csv', index_col=0)
+        >>> flow_series_B = pd.read_csv('example/flow_series_B.csv', index_col=0)
         >>> flow_series_B.index = pd.to_datetime(flow_series_B.index)
         >>> flow_series_A.head()
                                  total discharge (t)  end A
@@ -117,7 +117,7 @@ class TimeSeriesFile(object):
         Example
         -------
         >>> import delft3d
-        >>> bct = delft3d.TimeSeriesFile('river.bct')
+        >>> bct = delft3d.TimeSeriesFile('example/example1.bct')
         >>> bct_file = bct.export()
         >>> bct_file
             ["table-name           'Boundary Section : 1'\\n",
@@ -143,8 +143,8 @@ class TimeSeriesFile(object):
         Examples
         ----------
         >>> import delft3d
-        >>> bct = delft3d.TimeSeriesFile('river.bct')
-        >>> bct.to_file('river.bct')
+        >>> bct = delft3d.TimeSeriesFile('example/example1.bct')
+        >>> bct.to_file('example1.bct')
         """
         bct_data = self.export()
         with open(filename, 'w') as f:
@@ -218,16 +218,11 @@ class TimeSeries(object):
         """Set new content of header. Called by TimeSeriesFile.set_header()"""
         header = self.header.copy()
         for key, new_parm in data.items():
-            if key not in ['parameter', 'reference-time', 'records-in-table']:
+            if key != 'parameter':
                 # regular header
                 header[key].value = str(new_parm)
-            elif key in ['reference-time', 'records-in-table']:
-                # raise warning when reference-time and records-in-table are changed
-                header[key].value = str(new_parm)
-                print("'reference-time' and 'records-in-table' have been changed."
-                      " Please check time series data")
             else:
-                # change parameter
+                # parameter
                 for key_, new_parm_ in new_parm.items():
                     if unit:
                         header[key][key_].unit = str(new_parm_)

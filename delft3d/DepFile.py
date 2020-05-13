@@ -13,9 +13,9 @@ class DepFile(object):
     Example
     --------
     >>> import delft3d
-    >>> dep1 = delft3d.DepFile('river.dep', 'river.grd')
-    >>> grd_file = delft3d.GrdFile('river.grd')
-    >>> dep2 = delft3d.DepFile('river.dep', grd_file)
+    >>> dep1 = delft3d.DepFile('example/example1.dep', 'example/example1.grd')
+    >>> grd_file = delft3d.GrdFile('example/example1.grd')
+    >>> dep2 = delft3d.DepFile('example/example1.dep', grd_file)
     """
     def __init__(self, filename, grd_file):
         self.filename = filename
@@ -61,8 +61,8 @@ class DepFile(object):
         Examples
         -------
         >>> import delft3d
-        >>> grd = delft3d.GrdFile('river.grd')
-        >>> dep = delft3d.DepFile('river.dep', grd)
+        >>> grd = delft3d.GrdFile('example/example1.grd')
+        >>> dep = delft3d.DepFile('example/example1.dep', grd)
         >>> dep.plot()
         >>> dep.plot('test.jpg')
         >>> dep.plot(sph_epsg=4326, car_epsg=26917)
@@ -71,11 +71,11 @@ class DepFile(object):
             self.grd_file.spherical_to_cartesian(sph_epsg, car_epsg)
             print("Automatically transform from spherical to cartesian coordinates")
 
-        # Preprocessing
+        # Prepossessing
         x, y = np.array(self.grd_file.x), np.array(self.grd_file.y)
         z = self.data.copy()  # generate z for pcolormesh
         # if any of the four corners of each grid is invalid(missing value), the grid is marked invalid
-        # this preprocess make sure that pcolormesh won't generate weired grid because of missing value
+        # this prepossess make sure that pcolormesh won't generate weired grid because of missing value
         for i in range(x.shape[0] - 1):
             for j in range(x.shape[1] - 1):
                 if x[i, j] == 0 or x[i+1, j] == 0 or x[i, j+1] == 0 or x[i+1, j+1] == 0:
@@ -84,7 +84,7 @@ class DepFile(object):
         z = np.ma.masked_equal(z, -999)
 
         # interpolate the missing value in grd file
-        # otherwise the pcolormesh will inclue the missing value in grid
+        # otherwise the pcolormesh will include the missing value in grid
         missing_value = self.grd_file.header['Missing Value']
         for index, arr in enumerate(x):
             x1 = np.argwhere(arr == missing_value).ravel()
@@ -110,7 +110,7 @@ class DepFile(object):
         fig.colorbar(ax0)
         if filename:
             plt.savefig(filename)
-        fig.show()
+        plt.show()
 
     def set_dep(self, data):
         """
@@ -122,8 +122,8 @@ class DepFile(object):
         Examples
         -------
         >>> import delft3d
-        >>> dep = delft3d.DepFile('river.dep')
-        >>> dep_data = np.loadtxt('dep_data.txt')
+        >>> dep = delft3d.DepFile('example/example1.dep', 'example/example1.grd')
+        >>> dep_data = np.loadtxt('example/dep_data.txt')
         >>> dep.set_dep(dep_data)
         """
         self.data = data
@@ -135,7 +135,7 @@ class DepFile(object):
         Examples
         -------
         >>> import delft3d
-        >>> dep = delft3d.DepFile('river.dep')
+        >>> dep = delft3d.DepFile('example/example1.dep', 'example/example1.grd')
         >>> dep_file = dep.export()
         >>> dep_file
             ['   1.6929708E-01   2.8992051E-01   5.0572435E-01\\n,
@@ -144,13 +144,35 @@ class DepFile(object):
         """
         dep_data = np.append(self.data, np.full((1, self.data.shape[1]), -999.0), axis=0)
         dep_data = np.append(dep_data, np.full((dep_data.shape[0], 1), -999.0), axis=1)
+
         dep_file = []
-        for line in list(dep_data):
-            temp = []
-            for num in line:
-                temp.append("%16.7E" % num)
-            temp = ''.join(temp) + '\n'
-            dep_file.append(temp)
+        for index, depth in enumerate(dep_data):
+            line = ""
+            counts = 0
+            for num in depth:
+                if counts == 0:
+                    line += "%16.7E" % num
+                elif counts % 12 == 11:
+                    line += "%16.7E\n" % num
+                elif counts % 12 == 0:
+                    line += "%16.7E" % num
+                else:
+                    line += "%16.7E" % num
+                if counts == len(depth) - 1 and counts % 12 != 11:
+                    line += '\n'
+                counts += 1
+            # grd_file.append(line)
+            line = line.splitlines()
+            line = [x + '\n' for x in line]
+            dep_file.extend(line)
+
+        # dep_file = []
+        # for line in list(dep_data):
+        #     temp = []
+        #     for num in line:
+        #         temp.append("%16.7E" % num)
+        #     temp = ''.join(temp) + '\n'
+        #     dep_file.append(temp)
         return dep_file
 
     def to_file(self, filename):
@@ -164,8 +186,8 @@ class DepFile(object):
         Examples
         -------
         >>> import delft3d
-        >>> dep = delft3d.DepFile('river.dep')
-        >>> dep.to_file('river.dep')
+        >>> dep = delft3d.DepFile('example/example1.dep', 'example/example1.grd')
+        >>> dep.to_file('example1.dep')
         """
         dep_file = self.export()
         with open(filename, 'w') as f:

@@ -12,8 +12,9 @@ class GrdFile(object):
     Examples
     --------
     >>> import delft3d
-    >>> grd = delft3d.GrdFile('river.grd')
+    >>> grd = delft3d.GrdFile('example/example1.grd')
     """
+
     def __init__(self, filename):
         self.filename = filename
         self.x, self.y = None, None
@@ -44,9 +45,6 @@ class GrdFile(object):
             else:
                 y.extend(cor)
         x, y = np.array(x), np.array(y)
-        # mask invalid value
-        x = np.ma.masked_equal(x, self.header['Missing Value'])
-        y = np.ma.masked_equal(y, self.header['Missing Value'])
         # reshape to the original format
         self.x = x.reshape(n, m)
         self.y = y.reshape(n, m)
@@ -69,18 +67,21 @@ class GrdFile(object):
         Examples
         ----------
         >>> import delft3d
-        >>> grd = delft3d.GrdFile('river.grd')
+        >>> grd = delft3d.GrdFile('example/example1.grd')
         >>> grd.spherical_to_cartesian()
         >>> grd.spherical_to_cartesian(sph_epsg=4326, car_epsg=26917)
         """
-        # transform from spherical to cartesian
-        init_crs = CRS.from_epsg(sph_epsg)
-        obj_crs = CRS.from_epsg(car_epsg)
-        projection = Transformer.from_crs(init_crs, obj_crs)
-        # update x, y
-        self.x, self.y = projection.transform(self.x, self.y)
-        # update header
-        self.header['Coordinate System'] = 'Cartesian'
+        if self.header['Coordinate System'] == 'Cartesian':
+            pass
+        else:
+            # transform from spherical to cartesian
+            init_crs = CRS.from_epsg(sph_epsg)
+            obj_crs = CRS.from_epsg(car_epsg)
+            projection = Transformer.from_crs(init_crs, obj_crs)
+            # update x, y
+            self.x, self.y = projection.transform(self.x, self.y)
+            # update header
+            self.header['Coordinate System'] = 'Cartesian'
 
     def cartesian_to_spherical(self, car_epsg=3857, sph_epsg=4326):
         """
@@ -99,19 +100,22 @@ class GrdFile(object):
         Examples
         ----------
         >>> import delft3d
-        >>> grd = delft3d.GrdFile('river.grd')
+        >>> grd = delft3d.GrdFile('example/example1.grd')
         >>> grd.cartesian_to_spherical()
         >>> grd.cartesian_to_spherical(car_epsg=26917, sph_epsg=4326)
 
         """
-        # transform from cartesian to spherical
-        init_crs = CRS.from_epsg(car_epsg)
-        obj_crs = CRS.from_epsg(sph_epsg)
-        projection = Transformer.from_crs(init_crs, obj_crs)
-        # update x, y
-        self.x, self.y = projection.transform(self.x, self.y)
-        # update header
-        self.header['Coordinate System'] = 'Spherical'
+        if self.header['Coordinate System'] == 'Spherical':
+            pass
+        else:
+            # transform from cartesian to spherical
+            init_crs = CRS.from_epsg(car_epsg)
+            obj_crs = CRS.from_epsg(sph_epsg)
+            projection = Transformer.from_crs(init_crs, obj_crs)
+            # update x, y
+            self.x, self.y = projection.transform(self.x, self.y)
+            # update header
+            self.header['Coordinate System'] = 'Spherical'
 
     def get_nearest_grid(self, x, y, sph_epsg=4326, car_epsg=3857):
         """
@@ -139,8 +143,9 @@ class GrdFile(object):
         Examples
         --------
         >>> import delft3d
-        >>> grd = delft3d.GrdFile('river.grd')
-        >>> m, n = grd.get_nearest_grid(505944.89, 2497013.47)
+        >>> grd = delft3d.GrdFile('example/example1.grd')
+        >>> m1, n1 = grd.get_nearest_grid(505944.89, 2497013.47)
+        >>> m2, n2 = grd.get_nearest_grid(505944.89, 2497013.47, sph_epsg=4326, car_epsg=26917)
         """
         if self.header['Coordinate System'] == 'Spherical':
             # transform from spherical to cartesian
@@ -179,7 +184,7 @@ class GrdFile(object):
         Examples
         -------
         >>> import delft3d
-        >>> grd = delft3d.GrdFile('river.grd')
+        >>> grd = delft3d.GrdFile('example/example1.grd')
         >>> grd.plot()
         >>> grd.plot('test.jpg')
         >>> grd.plot(sph_epsg=4326, car_epsg=26917)
@@ -196,23 +201,23 @@ class GrdFile(object):
         else:
             x, y = self.x, self.y
 
+        x, y = x.copy(), y.copy()
         # Prepossessing
-        x, y = np.array(x.data), np.array(y.data)
         z = np.zeros(np.shape(x))  # generate z for pcolormesh
         # If any of the four corners of each grid is invalid(missing value),
-        # the grid is marked invalid. This preprocess make sure that pcolormesh
+        # the grid is marked invalid. This prepossess make sure that pcolormesh
         # won't generate weired grid because of the missing value
         invlid = self.header['Missing Value']  # Missing Value
         for i in range(x.shape[0] - 1):
             for j in range(x.shape[1] - 1):
-                if x[i, j] == invlid or x[i+1, j] == invlid or\
-                        x[i, j+1] == invlid or x[i+1, j+1] == invlid:
-                    z[i,j] = 1
+                if x[i, j] == invlid or x[i + 1, j] == invlid or \
+                        x[i, j + 1] == invlid or x[i + 1, j + 1] == invlid:
+                    z[i, j] = 1
         # mask the invalid grid to make it transparent in pcolormesh
         z = np.ma.masked_equal(z, 1)
 
         # interpolate the missing value in grd file
-        # otherwise the pcolormesh will inclue the missing value in grid
+        # otherwise the pcolormesh will include the missing value in grid
         for index, arr in enumerate(x):
             x1 = np.argwhere(arr == invlid).ravel()
             x2 = np.argwhere(arr != invlid).ravel()
@@ -227,11 +232,11 @@ class GrdFile(object):
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111)
         ax.pcolormesh(x, y, z, edgecolor='black',
-                            facecolor='none', linewidth=0.005)
+                      facecolor='none', linewidth=0.005)
         ax.axis('equal')
         if filename:
             plt.savefig(filename)
-        fig.show()
+        plt.show()
 
     def set_gird(self, x, y, coordinate_system):
         """
@@ -249,9 +254,9 @@ class GrdFile(object):
         Examples
         -------
         >>> import delft3d
-        >>> grd = delft3d.GrdFile('river.grd')
-        >>> grd_x = np.loadtxt('grd_x.txt')
-        >>> grd_y = np.loadtxt('grd_y.txt')
+        >>> grd = delft3d.GrdFile('example/example1.grd')
+        >>> grd_x = np.loadtxt('example/grd_x.txt')
+        >>> grd_y = np.loadtxt('example/grd_y.txt')
         >>> grd.set_gird(grd_x, grd_y, 'Cartesian')
         """
         self.x = x
@@ -266,7 +271,7 @@ class GrdFile(object):
         Examples
         -------
         >>> import delft3d
-        >>> grd = delft3d.GrdFile('river.grd')
+        >>> grd = delft3d.GrdFile('example/example1.grd')
         >>> grd_file = grd.export()
         >>> grd_file
             ['Coordinate System = Cartesian\\n',
@@ -307,7 +312,11 @@ class GrdFile(object):
                 if counts == len(cor) - 1 and counts % 5 != 4:
                     line += '\n'
                 counts += 1
-            grd_file.append(line)
+            # grd_file.append(line)
+            line = line.splitlines()
+            line = [x + '\n' for x in line]
+            grd_file.extend(line)
+
         return grd_file
 
     def to_file(self, filename):
@@ -322,8 +331,8 @@ class GrdFile(object):
         Examples
         -------
         >>> import delft3d
-        >>> grd = delft3d.GrdFile('river.grd')
-        >>> grd.to_file('river.grd')
+        >>> grd = delft3d.GrdFile('example/example1.grd')
+        >>> grd.to_file('example1.grd')
         """
         grd_file = self.export()
         with open(filename, 'w') as f:

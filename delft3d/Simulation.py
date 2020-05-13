@@ -4,6 +4,7 @@ import xml.dom.minidom
 import numpy as np
 from multiprocessing import Pool
 from delft3d import MdfFile
+import time
 
 
 class Simulation(object):
@@ -89,13 +90,13 @@ class Simulation(object):
         if len(result) == len(target):
             return result
 
-    def run(self, mdf_path, disp=True, netcdf=False, workers=1):
+    def run(self, mdf_file, disp=True, netcdf=False, workers=1):
         """
         Run Delft3D simulations. Parallelization is supported by multiprocessing.
 
         Parameters
         ----------
-        mdf_path : list or tuple or str
+        mdf_file : list or tuple or str
             The path of the mdf files to run.
         disp : bool, optional
             Show simulation progress.
@@ -117,31 +118,44 @@ class Simulation(object):
         >>> sim.run(['example/dflow1/f34.mdf', 'example/dflow2/f342.mdf'], workers=2)
 
         """
+
         _run = FunctionWrapper(self.sim_unit, (disp, netcdf))
-        if type(mdf_path) == str:
-            mdf_path = [mdf_path]
+        if type(mdf_file) == str:
+            mdf_file = [mdf_file]
 
-        if workers == 1:
-            # run one by one
-            for sim in mdf_path:
-                _run(sim)
+        if len(mdf_file) == 1:
+            # single simulation
+            _run(mdf_file[0])
         else:
-            # run in parallel
-            if workers == -1:
-                pool = Pool()
-            elif workers > 1:
-                pool = Pool(workers)
+            # multiple simulation
+            start = time.time()  # start time
+            if workers == 1:
+                # run one by one
+                print("---------------------Succession---------------------")
+                for sim in mdf_file:
+                    _run(sim)
             else:
-                raise ValueError('workers number cannot be negative')
-            pool.map(_run, mdf_path)
+                # run in parallel
+                print("-------------------Parallelization------------------")
+                if workers == -1:
+                    pool = Pool()
+                elif workers > 1:
+                    pool = Pool(workers)
+                else:
+                    raise ValueError('invalid workers number')
+                pool.map(_run, mdf_file)
+            # report
+            end = time.time()  # end time
+            time_usage = end - start
+            print("All simulations completed. Total time=%f s" % time_usage)
 
-    def sim_unit(self, mdf_path, disp=True, netcdf=False):
+    def sim_unit(self, mdf_file, disp=True, netcdf=False):
         """
-        Run Delft3D simulation. This is the base method of self.run.
+        Run one Delft3D simulation. This is the base method of self.run.
 
         Parameters
         ----------
-        mdf_path : str
+        mdf_file : str
             The path of the mdf file to run.
         disp : bool, optional
             Show simulation progress.
@@ -149,52 +163,57 @@ class Simulation(object):
             Save simulation as netcdf file.
 
         """
-        mdf_path = Path(mdf_path).absolute()
+        start = time.time()  # start time
+        mdf_file = Path(mdf_file).absolute()
         run_id = np.random.randint(1, 10000,  size=1)
         # modify mdf to save result as netcdf file
         if netcdf:
-            self.output_nc(mdf_path)
+            self.output_nc(mdf_file)
         # create xml
-        self.create_xml(mdf_path, run_id)
+        self.create_xml(mdf_file, run_id)
         # create bat
-        self.create_bat(mdf_path, run_id, disp=disp)
+        self.create_bat(mdf_file, run_id, disp=disp)
         # execute simulation
-        switch_cwd = "cd %s" % mdf_path.parents[0]
+        switch_cwd = "cd %s" % mdf_file.parents[0]
         run = "run_%d.bat" % run_id
         command = " && ".join([switch_cwd, run])
         status = os.system(command)
         if status != 0:
             raise RuntimeError("Simulation failed")
         # remove xml file and bat file
-        os.remove(mdf_path.parents[0] / ('config_d_hydro_%d.xml' % run_id))
-        os.remove(mdf_path.parents[0] / ("run_%d.bat" % run_id))
+        os.remove(mdf_file.parents[0] / ('config_d_hydro_%d.xml' % run_id))
+        os.remove(mdf_file.parents[0] / ("run_%d.bat" % run_id))
         # restore mdf file
         if netcdf:
-            mdf = MdfFile(mdf_path)
+            mdf = MdfFile(mdf_file)
             del mdf.data['FlNcdf']
-            mdf.to_file(mdf_path)
+            mdf.to_file(mdf_file)
+        # report
+        end = time.time()  # end time
+        time_usage = end - start
+        print("Simulation %s completed. Time usage=%f s" % (mdf_file.name, time_usage))
 
     @staticmethod
-    def create_xml(mdf_path, run_id):
+    def create_xml(mdf_file, run_id):
         """Create xml file for d_hydro.exe"""
-        mdf_path = Path(mdf_path).absolute()
+        mdf_file = Path(mdf_file).absolute()
         # get xml template path
         module_path = Path(os.path.dirname(__file__))
         xml_path = module_path / 'config_d_hydro.xml'
         # edit xml
         delft3d_xml = xml.dom.minidom.parse("%s" % xml_path)
-        mdf_file = delft3d_xml.getElementsByTagName('mdfFile')[0]
-        mdf_file.childNodes[0].data = mdf_path.name
-        url_file = delft3d_xml.getElementsByTagName('urlFile')[0]
-        url_file.childNodes[0].data = mdf_path.name.replace('.mdf', '.url')
+        mdfFile = delft3d_xml.getElementsByTagName('mdfFile')[0]
+        mdfFile.childNodes[0].data = mdf_file.name
+        urlFile = delft3d_xml.getElementsByTagName('urlFile')[0]
+        urlFile.childNodes[0].data = mdf_file.name.replace('.mdf', '.url')
         # write xml
-        project_xml_path = mdf_path.parents[0] / ('config_d_hydro_%d.xml' % run_id)
+        project_xml_path = mdf_file.parents[0] / ('config_d_hydro_%d.xml' % run_id)
         with project_xml_path.open('w') as f:
             delft3d_xml.writexml(f)
 
-    def create_bat(self, mdf_path, run_id, disp=True):
+    def create_bat(self, mdf_file, run_id, disp=True):
         """Create bat file to call d_hydro.exe to execute simulation"""
-        mdf_path = Path(mdf_path).absolute()
+        mdf_file = Path(mdf_file).absolute()
         # create command
         echo_off = "@echo off"
         set_path = "set PATH=%s;%s" % (self.engine['dflow2d3d'], self.engine['share'])
@@ -204,16 +223,16 @@ class Simulation(object):
             execute += ' > nul'
         bat = '\n'.join([echo_off, set_path, execute])
         # write bat
-        bat_path = mdf_path.parents[0] / ("run_%d.bat" % run_id)
+        bat_path = mdf_file.parents[0] / ("run_%d.bat" % run_id)
         with bat_path.open('w') as f:
             f.writelines(bat)
 
     @staticmethod
-    def output_nc(mdf_path):
+    def output_nc(mdf_file):
         """Modify mdf file to save simulation as netcdf file"""
-        mdf = MdfFile(mdf_path)
+        mdf = MdfFile(mdf_file)
         mdf.add_parm({'FlNcdf': 'map his dro fou'})
-        mdf.to_file(mdf_path)
+        mdf.to_file(mdf_file)
 
 
 class FunctionWrapper(object):
