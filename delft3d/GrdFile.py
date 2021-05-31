@@ -35,7 +35,7 @@ class GrdFile(object):
         self.header['MN'] = [m, n]
         # read coordinates
         x, y = [], []
-        pattern = r' ETA=\s+\d+(\s+[\d.Ee+]+\n?){' + str(m) + '}'
+        pattern = r' ETA=\s+\d+(\s+[\d.Ee+-]+\n?){' + str(m) + '}'
         matches = re.finditer(pattern, data)
         for index, match in enumerate(matches):
             cor = match[0].split()[2:]

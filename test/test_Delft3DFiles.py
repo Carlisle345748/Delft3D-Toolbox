@@ -93,8 +93,8 @@ class TestTimeSeriesFile(TestCase):
         grd1_carY = np.loadtxt('grd_test1_carY.txt')
 
         grd1.cartesian_to_spherical()
-        self.assertTrue((grd1.x == grd1_sphX).all())
-        self.assertTrue((grd1.y == grd1_sphY).all())
+        self.assertTrue((grd1.x - grd1_sphX < 1e-8).all())
+        self.assertTrue((grd1.y - grd1_sphY < 1e-8).all())
         grd1.spherical_to_cartesian()
         self.assertTrue((grd1.x - grd1_carX < 1e-8).all())
         self.assertTrue((grd1.y - grd1_carY < 1e-8).all())
