@@ -12,24 +12,8 @@ Python package to work with Delft3D-FLOW model.
 ![grid_and_depth](doc/example/example1.jpg)
 
 ## Installation
-
-1. Clone or download the repository.
-
-2. To directly import this module, add the [delft3d](delft3d) folder to one of the following directories:
-    - Your project directories.
-
-    - The 'site-packages' folder of Python installation. When using Anaconda, the most likely path is C:/users/[username]/Anaconda3/Lib/site-packages.
-
-    - A user defined directory. Create a (`.pth`) file containing the path of the user defined directory. Add this (`.pth`) file to the 'site-packages' folder. Here is an example of (`.pth`) file:
-
-            D:/mymodule
-
-3. Download the following dependencies using pip or conda.
-
-    - pyproj
-    - matplotlib
-    - numpy
-    - pandas
+To install into the environment of your choosing, run:  
+`pip install git+https://github.com/Carlisle345748/Delft3D-Toolbox.git@master`
 
 ## Usage
 
