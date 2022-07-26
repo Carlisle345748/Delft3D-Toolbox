@@ -15,6 +15,8 @@ Python package to work with Delft3D-FLOW model.
 To install into the environment of your choosing, run:  
 `pip install git+https://github.com/Carlisle345748/Delft3D-Toolbox.git@master`
 
+To uninstall run `pip uninstall delft3d-toolbox`.
+
 ## Usage
 
 Here are some examples of using this package. See more details and examples in the [doc](doc/documentation.ipynb).
