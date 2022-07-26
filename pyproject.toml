@@ -13,4 +13,4 @@ dependencies = [
     "pandas"
 ]
 license = {file = "LICENSE.md"}
-url = "https://github.com/Carlisle345748/Delft3D-Toolbox"
+urls = {repository = "https://github.com/Carlisle345748/Delft3D-Toolbox"}
