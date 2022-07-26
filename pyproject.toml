@@ -12,5 +12,5 @@ dependencies = [
     "numpy",
     "pandas"
 ]
-license = "LICENSE.md"
+license = {file = "LICENSE.md"}
 url = "https://github.com/Carlisle345748/Delft3D-Toolbox"
