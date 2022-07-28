@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "delft3d-toolbox"
+version = "0.0.1"
+description = "Python package for running and modifying Delft3D-FLOW model"
+dependencies = [
+    "pyproj",
+    "matplotlib",
+    "numpy",
+    "pandas"
+]
+license = {file = "LICENSE.md"}
+urls = {repository = "https://github.com/Carlisle345748/Delft3D-Toolbox"}
